@@ -14,7 +14,7 @@
 сервис бронирования: поиск слотов, разовое и регулярное бронирование, отмену с возвратом
 средств, администрирование расписания и базовую аналитику.
 
-Каждый артефакт в проекте ссылается на конкретные требования и задачи — это сделано
+Каждый артефакт в проекте ссылается на конкретные требования и задачи - это сделано
 намеренно, чтобы показать сквозную прослеживаемость (traceability) от бизнес-требования
 до технической реализации, как это принято в реальной работе аналитика.
 
@@ -26,10 +26,10 @@
 |---|---|
 | [`requirements.md`](./requirements.md) | Бизнес-требования: контекст, Use Case (UC-1 – UC-5), функциональные и нефункциональные требования, открытые вопросы |
 | [`backlog.md`](./backlog.md) | Декомпозиция требований на Epic → User Story → Task с критериями приёмки, приоритизация по MoSCoW |
-| [`openapi.yaml`](./openapi.yaml) | REST API спецификация (OpenAPI 3.0) — поиск слотов, создание/отмена брони, регулярные бронирования |
+| [`openapi.yaml`](./openapi.yaml) | REST API спецификация (OpenAPI 3.0) - поиск слотов, создание/отмена брони, регулярные бронирования |
 | [`kafka-integration.md`](./kafka-integration.md) | Событийная интеграция через Kafka: схема топика `booking-events`, форматы событий, producers/consumers |
 | [`database/schema_and_queries.sql`](./database/schema_and_queries.sql) | DDL-схема БД (Postgres), тестовые данные, аналитические SQL-запросы |
-| [`diagrams/`](./diagrams) | Визуальные диаграммы (BPMN, Sequence, State, ER, архитектура) — см. список ниже |
+| [`diagrams/`](./diagrams) | Визуальные диаграммы (BPMN, Sequence, State, ER, архитектура) - см. список ниже |
 
 ---
 
@@ -40,13 +40,13 @@
 
 | Файл | Диаграмма | Что показывает |
 |---|---|---|
-| `bpmn-uc1-booking.png` | BPMN — создание брони (UC-1) | Happy path + альтернатива «слоты не найдены» + таймаут оплаты |
-| `bpmn-uc2-recurring.png` | BPMN — регулярное бронирование (UC-2) | Проверка серии дат, обработка конфликтов |
-| `bpmn-uc3-cancellation.png` | BPMN — отмена брони (UC-3) | Расчёт возврата 100% / 50% |
-| `sequence-uc1-booking.png` | Sequence Diagram — создание брони | Booking Service ↔ Payment Service (REST) ↔ Notify Service (Kafka) |
-| `sequence-uc3-cancellation.png` | Sequence Diagram — отмена брони | Синхронный возврат средств + асинхронное уведомление |
-| `state-booking.png` | Диаграмма состояний — Booking | Создана → Подтверждена/Истекла → Завершена/Отменена |
-| `state-payment.png` | Диаграмма состояний — Payment | Обрабатывается → Успешно/Ошибка, повторная попытка оплаты |
+| `bpmn-uc1-booking.png` | BPMN - создание брони (UC-1) | Happy path + альтернатива «слоты не найдены» + таймаут оплаты |
+| `bpmn-uc2-recurring.png` | BPMN - регулярное бронирование (UC-2) | Проверка серии дат, обработка конфликтов |
+| `bpmn-uc3-cancellation.png` | BPMN - отмена брони (UC-3) | Расчёт возврата 100% / 50% |
+| `sequence-uc1-booking.png` | Sequence Diagram - создание брони | Booking Service ↔ Payment Service (REST) ↔ Notify Service (Kafka) |
+| `sequence-uc3-cancellation.png` | Sequence Diagram - отмена брони | Синхронный возврат средств + асинхронное уведомление |
+| `state-booking.png` | Диаграмма состояний - Booking | Создана → Подтверждена/Истекла → Завершена/Отменена |
+| `state-payment.png` | Диаграмма состояний - Payment | Обрабатывается → Успешно/Ошибка, повторная попытка оплаты |
 | `er-diagram.png` | ER-диаграмма | Complexes, Fields, Slots, Users, Bookings, Payments |
 | `architecture.png` | Микросервисная архитектура | API Gateway, три сервиса, Kafka, отдельные БД на сервис |
 
@@ -66,13 +66,13 @@
 
 Рекомендуемый порядок для тех, кто впервые смотрит репозиторий:
 
-1. `requirements.md` — что и зачем строим
-2. `backlog.md` — как требования превратились в задачи
-3. `diagrams/bpmn-*.png` — бизнес-процессы
-4. `diagrams/sequence-*.png` и `state-*.png` — техническое взаимодействие сервисов
-5. `openapi.yaml` и `kafka-integration.md` — контракты интеграций
-6. `diagrams/er-diagram.png` и `database/schema_and_queries.sql` — модель данных
-7. `diagrams/architecture.png` — общая картина системы
+1. `requirements.md` - что и зачем строим
+2. `backlog.md` - как требования превратились в задачи
+3. `diagrams/bpmn-*.png` - бизнес-процессы
+4. `diagrams/sequence-*.png` и `state-*.png` - техническое взаимодействие сервисов
+5. `openapi.yaml` и `kafka-integration.md` - контракты интеграций
+6. `diagrams/er-diagram.png` и `database/schema_and_queries.sql` - модель данных
+7. `diagrams/architecture.png` - общая картина системы
 
 ---
 
