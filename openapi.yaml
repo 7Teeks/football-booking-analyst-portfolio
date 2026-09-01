@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Сервис бронирования футбольных полей — API
+  description: >
+    REST API для поиска доступных слотов, создания и отмены бронирований
+    футбольных полей. Разработано в рамках учебного проекта системного аналитика.
+  version: 1.0.0
+
+servers:
+  - url: https://api.football-booking.ru/v1
+    description: Продакшн-сервер (условный)
+
+tags:
+  - name: Fields
+    description: Поиск полей и доступных слотов
+  - name: Bookings
+    description: Создание, просмотр и отмена бронирований
+
+paths:
+
+  # ---------- 1. Поиск доступных слотов ----------
+  /fields/available-slots:
+    get:
+      tags: [Fields]
+      summary: Найти доступные слоты по параметрам
+      description: |
+        Соответствует задаче BOOK-101 из backlog.
+        Возвращает список свободных слотов на выбранную дату и тип поля.
+        Если совпадений нет — возвращает пустой массив slots и заполненное поле alternatives.
+      parameters:
+        - name: complexId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Идентификатор комплекса
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-09-05"
+        - name: fieldType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [5x5, 8x8, 11x11]
+        - name: timeFrom
+          in: query
+          required: false
+          schema:
+            type: string
+            format: time
+          example: "18:00"
+        - name: timeTo
+          in: query
+          required: false
+          schema:
+            type: string
+            format: time
+          example: "22:00"
+      responses:
+        "200":
+          description: Список слотов найден (может быть пустым)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slots:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Slot"
+                  alternatives:
+                    type: array
+                    description: Заполняется, если slots пуст (см. UC-1, альтернативный сценарий 5a)
+                    items:
+                      $ref: "#/components/schemas/Slot"
+        "400":
+          description: Некорректные параметры запроса
+
+  # ---------- 2. Создание разовой брони ----------
+  /bookings:
+    post:
+      tags: [Bookings]
+      summary: Забронировать слот
+      description: |
+        Соответствует задаче BOOK-105.
+        Создаёт бронь в статусе "Создана" и резервирует слот на 15 минут (см. FR-3).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slotId, userId, fieldType]
+              properties:
+                slotId:
+                  type: string
+                  example: "slot_48213"
+                userId:
+                  type: string
+                  example: "user_1001"
+                fieldType:
+                  type: string
+                  enum: [5x5, 8x8, 11x11]
+      responses:
+        "201":
+          description: Бронь создана, ожидает оплаты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "409":
+          description: Слот уже занят (конфликт параллельного бронирования, см. NFR-2)
+        "400":
+          description: Некорректные данные запроса
+
+  /bookings/{bookingId}:
+    get:
+      tags: [Bookings]
+      summary: Получить детали брони
+      parameters:
+        - $ref: "#/components/parameters/BookingId"
+      responses:
+        "200":
+          description: Детали брони
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Бронь не найдена
+
+    delete:
+      tags: [Bookings]
+      summary: Отменить бронь
+      description: |
+        Соответствует задаче BOOK-301 (см. UC-3).
+        Сумма возврата рассчитывается автоматически: 100% при отмене за 24+ часа,
+        50% при отмене позже (см. FR-8).
+      parameters:
+        - $ref: "#/components/parameters/BookingId"
+      responses:
+        "200":
+          description: Бронь отменена, возврат инициирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Отменена"
+                  refundPercent:
+                    type: integer
+                    example: 100
+                  refundAmount:
+                    type: number
+                    example: 2500
+        "404":
+          description: Бронь не найдена
+        "409":
+          description: Бронь уже отменена или завершена — повторная отмена невозможна
+
+  # ---------- 3. Регулярное бронирование ----------
+  /bookings/recurring:
+    post:
+      tags: [Bookings]
+      summary: Создать серию регулярных бронирований
+      description: |
+        Соответствует задаче BOOK-201 (см. UC-2).
+        Резервирует все даты серии одновременно на 15 минут (единая оплата).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fieldId, dayOfWeek, timeSlot, weeksCount, userId]
+              properties:
+                fieldId:
+                  type: string
+                dayOfWeek:
+                  type: string
+                  enum: [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+                timeSlot:
+                  type: string
+                  example: "20:00"
+                weeksCount:
+                  type: integer
+                  example: 8
+                userId:
+                  type: string
+      responses:
+        "201":
+          description: Серия создана, ожидает единой оплаты
+        "409":
+          description: >
+            Одна или несколько дат заняты — в ответе возвращается список конфликтных
+            дат для выбора действия (см. BOOK-203)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conflictDates:
+                    type: array
+                    items:
+                      type: string
+                      format: date
+
+components:
+  parameters:
+    BookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: "booking_78341"
+
+  schemas:
+    Slot:
+      type: object
+      properties:
+        slotId:
+          type: string
+        fieldId:
+          type: string
+        fieldType:
+          type: string
+          enum: [5x5, 8x8, 11x11]
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        price:
+          type: number
+          example: 2500
+
+    Booking:
+      type: object
+      properties:
+        bookingId:
+          type: string
+        slotId:
+          type: string
+        userId:
+          type: string
+        status:
+          type: string
+          enum: [Создана, Подтверждена, Отменена, Истекла, Завершена]
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          description: Время истечения резерва (createdAt + 15 минут)
+        price:
+          type: number
