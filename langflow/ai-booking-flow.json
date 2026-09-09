@@ -1,0 +1,32 @@
+{
+  "description": "Прототип AI-агента для поиска слотов",
+  "name": "Booking Agent Flow",
+  "data": {
+    "nodes": [
+      {
+        "id": "Prompt_1",
+        "type": "PromptTemplate",
+        "data": {
+          "template": "Твоя задача — извлечь дату из запроса: {user_input}"
+        }
+      },
+      {
+        "id": "OpenAIModel_1",
+        "type": "OpenAIModel",
+        "data": {
+          "model_name": "gpt-4o-mini",
+          "temperature": 0.1
+        }
+      },
+      {
+        "id": "APIRequest_1",
+        "type": "APIRequest",
+        "data": {
+          "method": "GET",
+          "url": "http://localhost:8000/v1/fields/available-slots",
+          "headers": {"Content-Type": "application/json"}
+        }
+      }
+    ]
+  }
+}
